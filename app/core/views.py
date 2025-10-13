@@ -1,20 +1,23 @@
 from django.views.generic import TemplateView, UpdateView
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.decorators import login_required
+from django.views.generic import TemplateView
+from django.contrib.auth.views import PasswordResetView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.shortcuts import redirect
-from .forms import ProfesionalLoginForm, ProfesionalRegistrationForm, ProfesionalUpdateForm, ProfesionalPasswordResetForm, ProfesionalSetPasswordForm
-from django.contrib.auth import login
+from .forms import ProfesionalLoginForm, ProfesionalRegistrationForm, ProfesionalUpdateForm,ProfesionalSetPasswordForm,ProfesionalPasswordResetForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 import json
 from datetime import datetime, date
-from .models import Cita
-from app.resources.models import Recurso
-from django.shortcuts import render
+from .models import Cita, Video, Libro, Enlace, Articulo
 
 
 # ==================== VISTAS DE AUTENTICACIÓN ====================
@@ -121,6 +124,411 @@ class CalendarView(TemplateView):
         context.update({
             'page_title': 'Calendario - DislexIA',
             'active_section': 'calendar',
+        })
+        return context
+
+class CrearRecursoView(LoginRequiredMixin, CreateView):
+    model = Video
+    template_name = 'recurso.html'
+    fields = ['titulo', 'descripcion', 'archivo', 'categoria']  # según tu modelo
+    success_url = reverse_lazy('core:documents')
+
+    def form_valid(self, form):
+        form.instance.creado_por = self.request.user
+        return super().form_valid(form)
+
+class DocumentsView(TemplateView):
+    template_name = 'documents.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Obtener todos los recursos activos
+        videos = Video.objects.filter(activo=True)
+        libros = Libro.objects.filter(activo=True)
+        enlaces = Enlace.objects.filter(activo=True)
+        articulos = Articulo.objects.filter(activo=True)
+
+        # Crear lista unificada con etiqueta de categoría
+        recursos_list = []
+
+        # Agregar videos
+        for video in videos:
+            recursos_list.append({
+                'id': video.id,
+                'categoria': 'videos',
+                'get_categoria_display': 'Video',
+                'titulo': video.titulo,
+                'descripcion': video.descripcion,
+                'imagen': None,  # Videos no tienen imagen de portada
+                'duracion': video.duracion,
+                'autor': None,
+                'visitas': 0,  # Agregar si tienes este campo
+                'url_externa': None,
+                'video_embed': video.get_embed_code(),  # Para usar en el template
+            })
+
+        # Agregar libros
+        for libro in libros:
+            recursos_list.append({
+                'id': libro.id,
+                'categoria': 'libros',
+                'get_categoria_display': 'Libro',
+                'titulo': libro.titulo,
+                'descripcion': libro.descripcion,
+                'imagen': libro.portada if hasattr(libro, 'portada') else None,
+                'duracion': None,
+                'autor': libro.autor,
+                'visitas': 0,
+                'url_externa': libro.url_descarga if hasattr(libro, 'url_descarga') else None,
+                'video_embed': None,
+            })
+
+        # Agregar enlaces
+        for enlace in enlaces:
+            recursos_list.append({
+                'id': enlace.id,
+                'categoria': 'enlaces',
+                'get_categoria_display': 'Enlace',
+                'titulo': enlace.titulo,
+                'descripcion': enlace.descripcion,
+                'imagen': None,
+                'duracion': None,
+                'autor': None,
+                'visitas': 0,
+                'url_externa': enlace.url,
+                'video_embed': None,
+            })
+
+        # Agregar artículos
+        for articulo in articulos:
+            recursos_list.append({
+                'id': articulo.id,
+                'categoria': 'articulos',
+                'get_categoria_display': 'Artículo',
+                'titulo': articulo.titulo,
+                'descripcion': articulo.resumen if hasattr(articulo, 'resumen') else articulo.descripcion,
+                'imagen': articulo.imagen if hasattr(articulo, 'imagen') else None,
+                'duracion': None,
+                'autor': articulo.autor,
+                'visitas': 0,
+                'url_externa': articulo.url_fuente if hasattr(articulo, 'url_fuente') else None,
+                'video_embed': None,
+            })
+
+        context.update({
+            'page_title': 'Recursos Digitales - DislexIA',
+            'active_section': 'documents',
+            'recursos': recursos_list,
+            # También pasamos separados por si acaso
+            'videos': videos,
+            'libros': libros,
+            'enlaces': enlaces,
+            'articulos': articulos,
+        })
+        return context
+
+
+class RecursoAPIView(TemplateView):
+    """Vista base para API de recursos"""
+
+    @method_decorator(login_required)
+    @method_decorator(require_http_methods(["GET", "POST", "PUT", "DELETE"]))
+    def dispatch(self, *args, **kwargs):
+        # Solo staff puede crear/editar/eliminar
+        if self.request.method in ['POST', 'PUT', 'DELETE']:
+            if not self.request.user.is_staff:
+                return JsonResponse({'error': 'No autorizado'}, status=403)
+        return super().dispatch(*args, **kwargs)
+
+
+class VideoAPIView(RecursoAPIView):
+    """API para Videos"""
+
+    def get(self, request, video_id):
+        try:
+            video = Video.objects.get(id=video_id)
+            return JsonResponse({
+                'id': video.id,
+                'titulo': video.titulo,
+                'descripcion': video.descripcion,
+                'codigo_embed': video.codigo_embed,
+                'duracion': video.duracion,
+                'fecha_publicacion': str(video.fecha_publicacion) if video.fecha_publicacion else None,
+            })
+        except Video.DoesNotExist:
+            return JsonResponse({'error': 'Video no encontrado'}, status=404)
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            video = Video.objects.create(
+                titulo=data.get('titulo'),
+                descripcion=data.get('descripcion'),
+                codigo_embed=data.get('codigo_embed'),
+                duracion=data.get('duracion', ''),
+                creado_por=request.user,
+                activo=True
+            )
+            return JsonResponse({
+                'message': 'Video creado exitosamente',
+                'id': video.id
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def put(self, request, video_id):
+        try:
+            video = Video.objects.get(id=video_id)
+            data = json.loads(request.body)
+
+            video.titulo = data.get('titulo', video.titulo)
+            video.descripcion = data.get('descripcion', video.descripcion)
+            video.codigo_embed = data.get('codigo_embed', video.codigo_embed)
+            video.duracion = data.get('duracion', video.duracion)
+            video.save()
+
+            return JsonResponse({'message': 'Video actualizado exitosamente'})
+        except Video.DoesNotExist:
+            return JsonResponse({'error': 'Video no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def delete(self, request, video_id):
+        try:
+            video = Video.objects.get(id=video_id)
+            video.delete()
+            return JsonResponse({'message': 'Video eliminado exitosamente'})
+        except Video.DoesNotExist:
+            return JsonResponse({'error': 'Video no encontrado'}, status=404)
+
+
+class LibroAPIView(RecursoAPIView):
+    """API para Libros"""
+
+    def get(self, request, libro_id):
+        try:
+            libro = Libro.objects.get(id=libro_id)
+            return JsonResponse({
+                'id': libro.id,
+                'titulo': libro.titulo,
+                'descripcion': libro.descripcion,
+                'autor': libro.autor,
+                'url_descarga': libro.url_descarga,
+                'año_publicacion': libro.año_publicacion,
+            })
+        except Libro.DoesNotExist:
+            return JsonResponse({'error': 'Libro no encontrado'}, status=404)
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            libro = Libro.objects.create(
+                titulo=data.get('titulo'),
+                descripcion=data.get('descripcion'),
+                autor=data.get('autor'),
+                url_descarga=data.get('url_descarga', ''),
+                año_publicacion=data.get('año_publicacion'),
+                creado_por=request.user,
+                activo=True
+            )
+            return JsonResponse({
+                'message': 'Libro creado exitosamente',
+                'id': libro.id
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def put(self, request, libro_id):
+        try:
+            libro = Libro.objects.get(id=libro_id)
+            data = json.loads(request.body)
+
+            libro.titulo = data.get('titulo', libro.titulo)
+            libro.descripcion = data.get('descripcion', libro.descripcion)
+            libro.autor = data.get('autor', libro.autor)
+            libro.url_descarga = data.get('url_descarga', libro.url_descarga)
+            libro.año_publicacion = data.get('año_publicacion', libro.año_publicacion)
+            libro.save()
+
+            return JsonResponse({'message': 'Libro actualizado exitosamente'})
+        except Libro.DoesNotExist:
+            return JsonResponse({'error': 'Libro no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def delete(self, request, libro_id):
+        try:
+            libro = Libro.objects.get(id=libro_id)
+            libro.delete()
+            return JsonResponse({'message': 'Libro eliminado exitosamente'})
+        except Libro.DoesNotExist:
+            return JsonResponse({'error': 'Libro no encontrado'}, status=404)
+
+
+class EnlaceAPIView(RecursoAPIView):
+    """API para Enlaces"""
+
+    def get(self, request, enlace_id):
+        try:
+            enlace = Enlace.objects.get(id=enlace_id)
+            return JsonResponse({
+                'id': enlace.id,
+                'titulo': enlace.titulo,
+                'descripcion': enlace.descripcion,
+                'url': enlace.url,
+                'categoria': enlace.categoria,
+            })
+        except Enlace.DoesNotExist:
+            return JsonResponse({'error': 'Enlace no encontrado'}, status=404)
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            enlace = Enlace.objects.create(
+                titulo=data.get('titulo'),
+                descripcion=data.get('descripcion'),
+                url=data.get('url'),
+                categoria=data.get('categoria', ''),
+                creado_por=request.user,
+                activo=True
+            )
+            return JsonResponse({
+                'message': 'Enlace creado exitosamente',
+                'id': enlace.id
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def put(self, request, enlace_id):
+        try:
+            enlace = Enlace.objects.get(id=enlace_id)
+            data = json.loads(request.body)
+
+            enlace.titulo = data.get('titulo', enlace.titulo)
+            enlace.descripcion = data.get('descripcion', enlace.descripcion)
+            enlace.url = data.get('url', enlace.url)
+            enlace.categoria = data.get('categoria', enlace.categoria)
+            enlace.save()
+
+            return JsonResponse({'message': 'Enlace actualizado exitosamente'})
+        except Enlace.DoesNotExist:
+            return JsonResponse({'error': 'Enlace no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def delete(self, request, enlace_id):
+        try:
+            enlace = Enlace.objects.get(id=enlace_id)
+            enlace.delete()
+            return JsonResponse({'message': 'Enlace eliminado exitosamente'})
+        except Enlace.DoesNotExist:
+            return JsonResponse({'error': 'Enlace no encontrado'}, status=404)
+
+
+class ArticuloAPIView(RecursoAPIView):
+    """API para Artículos"""
+
+    def get(self, request, articulo_id):
+        try:
+            articulo = Articulo.objects.get(id=articulo_id)
+            return JsonResponse({
+                'id': articulo.id,
+                'titulo': articulo.titulo,
+                'descripcion': articulo.resumen if hasattr(articulo, 'resumen') else articulo.descripcion,
+                'autor': articulo.autor,
+                'url_fuente': articulo.url_fuente,
+                'fecha_publicacion': str(articulo.fecha_publicacion) if articulo.fecha_publicacion else None,
+            })
+        except Articulo.DoesNotExist:
+            return JsonResponse({'error': 'Artículo no encontrado'}, status=404)
+
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+
+            # Crear diccionario base
+            articulo_data = {
+                'titulo': data.get('titulo'),
+                'autor': data.get('autor'),
+                'url_fuente': data.get('url_fuente', ''),
+                'creado_por': request.user,
+                'activo': True
+            }
+
+            # Agregar campo según el modelo
+            if hasattr(Articulo, 'resumen'):
+                articulo_data['resumen'] = data.get('descripcion')
+            else:
+                articulo_data['descripcion'] = data.get('descripcion')
+
+            # Fecha de publicación
+            fecha_pub = data.get('fecha_publicacion')
+            if fecha_pub:
+                from datetime import datetime
+                articulo_data['fecha_publicacion'] = datetime.strptime(fecha_pub, '%Y-%m-%d').date()
+
+            articulo = Articulo.objects.create(**articulo_data)
+
+            return JsonResponse({
+                'message': 'Artículo creado exitosamente',
+                'id': articulo.id
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def put(self, request, articulo_id):
+        try:
+            articulo = Articulo.objects.get(id=articulo_id)
+            data = json.loads(request.body)
+
+            articulo.titulo = data.get('titulo', articulo.titulo)
+            articulo.autor = data.get('autor', articulo.autor)
+            articulo.url_fuente = data.get('url_fuente', articulo.url_fuente)
+
+            # Actualizar descripción/resumen según el modelo
+            if hasattr(articulo, 'resumen'):
+                articulo.resumen = data.get('descripcion', articulo.resumen)
+            else:
+                articulo.descripcion = data.get('descripcion', articulo.descripcion)
+
+            # Actualizar fecha si se proporciona
+            fecha_pub = data.get('fecha_publicacion')
+            if fecha_pub:
+                from datetime import datetime
+                articulo.fecha_publicacion = datetime.strptime(fecha_pub, '%Y-%m-%d').date()
+
+            articulo.save()
+
+            return JsonResponse({'message': 'Artículo actualizado exitosamente'})
+        except Articulo.DoesNotExist:
+            return JsonResponse({'error': 'Artículo no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    def delete(self, request, articulo_id):
+        try:
+            articulo = Articulo.objects.get(id=articulo_id)
+            articulo.delete()
+            return JsonResponse({'message': 'Artículo eliminado exitosamente'})
+        except Articulo.DoesNotExist:
+            return JsonResponse({'error': 'Artículo no encontrado'}, status=404)
+
+
+
+
+# Panel de Administración de Recursos
+class AdminRecursosView(LoginRequiredMixin, TemplateView):
+    template_name = 'recursos/admin_recursos.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': 'Administrar Recursos',
+            'videos': Video.objects.all(),
+            'libros': Libro.objects.all(),
+            'enlaces': Enlace.objects.all(),
+            'articulos': Articulo.objects.all(),
         })
         return context
 
@@ -373,14 +781,3 @@ def marcar_cita_completada(request, cita_id):
     except Cita.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Cita no encontrada'}, status=404)
 
-@login_required
-def documents_view(request):
-    """Vista para mostrar los recursos educativos"""
-    recursos = Recurso.objects.filter(activo=True)
-    
-    context = {
-        'page_title': 'Recursos Digitales - DislexIA',
-        'active_section': 'documents',
-        'recursos': recursos,
-    }
-    return render(request, 'documents.html', context)

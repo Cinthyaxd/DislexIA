@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'app.dashboard',
     'app.core',
     'app.games',
-    'app.resources',
 
     
 ]

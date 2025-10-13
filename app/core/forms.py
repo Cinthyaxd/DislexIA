@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
-from .models import Profesional
+from .models import Profesional,Video, Libro, Enlace, Articulo
 
 
 class ProfesionalUpdateForm(forms.ModelForm):
@@ -207,3 +207,96 @@ class ProfesionalSetPasswordForm(SetPasswordForm):
         }),
         label='Confirmar contraseña'
     )
+
+
+class VideoForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = ['titulo', 'descripcion', 'codigo_embed', 'duracion', 'fecha_publicacion', 'activo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Título del video'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descripción del video'
+            }),
+            'codigo_embed': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Pega aquí el código iframe completo de YouTube o la URL del video'
+            }),
+            'duracion': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '10:30'
+            }),
+            'fecha_publicacion': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+        }
+        help_texts = {
+            'codigo_embed': '''Opciones válidas:
+            1. Código iframe completo de YouTube (compartir → insertar)
+            2. URL del video (https://www.youtube.com/watch?v=...)
+            3. URL corta (https://youtu.be/...)''',
+        }
+
+    def clean_codigo_embed(self):
+        codigo = self.cleaned_data.get('codigo_embed', '').strip()
+
+        # Validar que sea de YouTube
+        if not ('youtube.com' in codigo.lower() or 'youtu.be' in codigo.lower()):
+            raise forms.ValidationError('Debe ser un código o URL válida de YouTube.')
+
+        return
+
+
+class LibroForm(forms.ModelForm):
+    class Meta:
+        model = Libro
+        fields = ['titulo', 'autor', 'descripcion', 'url_descarga', 'isbn', 'año_publicacion', 'portada', 'activo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'autor': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'url_descarga': forms.URLInput(attrs={'class': 'form-control'}),
+            'isbn': forms.TextInput(attrs={'class': 'form-control'}),
+            'año_publicacion': forms.NumberInput(attrs={'class': 'form-control'}),
+            'portada': forms.FileInput(attrs={'class': 'form-control'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class EnlaceForm(forms.ModelForm):
+    class Meta:
+        model = Enlace
+        fields = ['titulo', 'descripcion', 'url', 'categoria', 'activo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'url': forms.URLInput(attrs={'class': 'form-control'}),
+            'categoria': forms.TextInput(attrs={'class': 'form-control'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class ArticuloForm(forms.ModelForm):
+    class Meta:
+        model = Articulo
+        fields = ['titulo', 'resumen', 'contenido', 'autor', 'url_fuente', 'fecha_publicacion', 'imagen', 'activo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'resumen': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'contenido': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+            'autor': forms.TextInput(attrs={'class': 'form-control'}),
+            'url_fuente': forms.URLInput(attrs={'class': 'form-control'}),
+            'fecha_publicacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'imagen': forms.FileInput(attrs={'class': 'form-control'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

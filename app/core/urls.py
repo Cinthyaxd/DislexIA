@@ -1,9 +1,7 @@
 from django.urls import include, path
 from . import views
 from .views import get_citas_dia, crear_cita, eliminar_cita, marcar_cita_completada
-
 app_name = 'core'
-
 urlpatterns = [
     # Autenticación
     path('login/', views.ProfesionalLoginView.as_view(), name='login'),
@@ -18,7 +16,7 @@ urlpatterns = [
     
     # Vistas protegidas
     path('calendar/', views.CalendarView.as_view(), name='calendar'),
-    #path('documents/', views.DocumentsView.as_view(), name='documents'),
+    path('documents/', views.DocumentsView.as_view(), name='documents'),
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('support/', views.SupportView.as_view(), name='support'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
@@ -31,7 +29,20 @@ urlpatterns = [
     path('citas/<int:cita_id>/eliminar/', eliminar_cita, name='eliminar_cita'),
     path('citas/<int:cita_id>/completar/', marcar_cita_completada, name='marcar_cita_completada'),
 
-    # Recursos
-    path('documents/', views.documents_view, name='documents'),
+    # Recursos - Videos
+    path('api/recursos/videos/', views.VideoAPIView.as_view(), name='api_video_create'),
+    path('api/recursos/videos/<int:video_id>/', views.VideoAPIView.as_view(), name='api_video_detail'),
 
+    # API para Libros
+    path('api/recursos/libros/', views.LibroAPIView.as_view(), name='api_libro_create'),
+    path('api/recursos/libros/<int:libro_id>/', views.LibroAPIView.as_view(), name='api_libro_detail'),
+
+    # API para Enlaces
+    path('api/recursos/enlaces/', views.EnlaceAPIView.as_view(), name='api_enlace_create'),
+    path('api/recursos/enlaces/<int:enlace_id>/', views.EnlaceAPIView.as_view(), name='api_enlace_detail'),
+    path('crear-recurso/', views.CrearRecursoView.as_view(), name='crear_recurso'),
+
+    # API para Artículos
+    path('api/recursos/articulos/', views.ArticuloAPIView.as_view(), name='api_articulo_create'),
+    path('api/recursos/articulos/<int:articulo_id>/', views.ArticuloAPIView.as_view(), name='api_articulo_detail'),
 ]

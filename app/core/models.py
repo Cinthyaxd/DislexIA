@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+import re
 
 # Importar constantes
 from .constants import (
@@ -204,3 +205,131 @@ class Cita(models.Model):
 
     def __str__(self):
         return f"{self.nombre_paciente} - {self.fecha} {self.hora}"
+
+class Video(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    codigo_embed = models.TextField(
+        help_text="Pega el código completo de iframe que te da Youtube."
+    )
+    duracion = models.CharField(max_length=20, blank=True, null=True, help_text="Ej: 10:30")
+    fecha_publicacion= models.DateField(blank=True, null=True)
+    creado_por= models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Video'
+        verbose_name_plural = 'Videos'
+
+    def __str__(self):
+        return self.titulo
+
+    def get_embed_code(self):
+        """
+        Limpia y valida el código embed.
+        Acepta tanto el iframe completo como solo la URL
+        """
+        codigo = self.codigo_embed.strip()
+
+        # Si ya es un iframe, lo devuelve limpio
+        if '<iframe' in codigo.lower():
+            # Asegurarse de que tenga las clases responsive de Bootstrap
+            if 'class=' not in codigo:
+                codigo = codigo.replace('<iframe', '<iframe class="w-100 h-100"')
+            return codigo
+
+        # Si es solo una URL, crear el iframe
+        if 'youtube.com' in codigo or 'youtu.be' in codigo:
+            video_id = self.extract_video_id(codigo)
+            if video_id:
+                return f'''<iframe class="w-100 h-100" 
+                    src="https://www.youtube.com/embed/{video_id}" 
+                    title="{self.titulo}"
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>'''
+
+        return codigo
+
+    def extract_video_id(self, url):
+        """Extrae el ID del video de cualquier formato de URL de YouTube"""
+        patterns = [
+            r'youtube\.com/embed/([a-zA-Z0-9_-]+)',
+            r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)',
+            r'youtu\.be/([a-zA-Z0-9_-]+)',
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        return None
+
+    def get_thumbnail(self):
+        """Obtiene la URL de la miniatura del video"""
+        video_id = self.extract_video_id(self.codigo_embed)
+        if video_id:
+            return f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg'
+        return None
+class Libro(models.Model):
+    titulo = models.CharField(max_length=200)
+    autor = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    url_descarga = models.URLField(blank=True, null=True, help_text="Link de descarga o vista previa")
+    isbn = models.CharField(max_length=20, blank=True, null=True)
+    año_publicacion = models.IntegerField(blank=True, null=True)
+    portada = models.ImageField(upload_to='libros/', blank=True, null=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Libro'
+        verbose_name_plural = 'Libros'
+
+    def __str__(self):
+        return f"{self.titulo} - {self.autor}"
+
+
+class Enlace(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    url = models.URLField()
+    categoria = models.CharField(max_length=100, blank=True, null=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Enlace'
+        verbose_name_plural = 'Enlaces'
+
+    def __str__(self):
+        return self.titulo
+
+
+class Articulo(models.Model):
+    titulo = models.CharField(max_length=200)
+    resumen = models.TextField()
+    contenido = models.TextField(blank=True, null=True)
+    autor = models.CharField(max_length=200)
+    url_fuente = models.URLField(blank=True, null=True, help_text="URL del artículo original")
+    fecha_publicacion = models.DateField()
+    imagen = models.ImageField(upload_to='articulos/', blank=True, null=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_publicacion']
+        verbose_name = 'Artículo'
+        verbose_name_plural = 'Artículos'
+
+    def __str__(self):
+        return self.titulo
