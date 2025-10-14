@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
 
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
@@ -227,25 +228,24 @@ class DocumentsView(TemplateView):
             'articulos': articulos,
         })
         return context
+# Primero, elimina la clase RecursoAPIView que no se está usando
 
+# Luego reemplaza todas las clases API con estas versiones corregidas:
 
-class RecursoAPIView(TemplateView):
-    """Vista base para API de recursos"""
-
-    @method_decorator(login_required)
-    @method_decorator(require_http_methods(["GET", "POST", "PUT", "DELETE"]))
-    def dispatch(self, *args, **kwargs):
-        # Solo staff puede crear/editar/eliminar
-        if self.request.method in ['POST', 'PUT', 'DELETE']:
-            if not self.request.user.is_staff:
-                return JsonResponse({'error': 'No autorizado'}, status=403)
-        return super().dispatch(*args, **kwargs)
-
-
-class VideoAPIView(RecursoAPIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class VideoAPIView(View):
     """API para Videos"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if request.method in ['POST', 'PUT', 'DELETE']:
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'No autorizado'}, status=403)
+        return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, video_id):
+    def get(self, request, video_id=None, *args, **kwargs):
+        if not video_id:
+            return JsonResponse({'error': 'ID requerido para GET'}, status=400)
         try:
             video = Video.objects.get(id=video_id)
             return JsonResponse({
@@ -259,7 +259,7 @@ class VideoAPIView(RecursoAPIView):
         except Video.DoesNotExist:
             return JsonResponse({'error': 'Video no encontrado'}, status=404)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
             video = Video.objects.create(
@@ -277,7 +277,9 @@ class VideoAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def put(self, request, video_id):
+    def put(self, request, video_id=None, *args, **kwargs):
+        if not video_id:
+            return JsonResponse({'error': 'ID requerido para PUT'}, status=400)
         try:
             video = Video.objects.get(id=video_id)
             data = json.loads(request.body)
@@ -294,7 +296,9 @@ class VideoAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def delete(self, request, video_id):
+    def delete(self, request, video_id=None, *args, **kwargs):
+        if not video_id:
+            return JsonResponse({'error': 'ID requerido para DELETE'}, status=400)
         try:
             video = Video.objects.get(id=video_id)
             video.delete()
@@ -303,10 +307,20 @@ class VideoAPIView(RecursoAPIView):
             return JsonResponse({'error': 'Video no encontrado'}, status=404)
 
 
-class LibroAPIView(RecursoAPIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class LibroAPIView(View):
     """API para Libros"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if request.method in ['POST', 'PUT', 'DELETE']:
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'No autorizado'}, status=403)
+        return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, libro_id):
+    def get(self, request, libro_id=None, *args, **kwargs):
+        if not libro_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             libro = Libro.objects.get(id=libro_id)
             return JsonResponse({
@@ -314,13 +328,13 @@ class LibroAPIView(RecursoAPIView):
                 'titulo': libro.titulo,
                 'descripcion': libro.descripcion,
                 'autor': libro.autor,
-                'url_descarga': libro.url_descarga,
-                'año_publicacion': libro.año_publicacion,
+                'url_descarga': libro.url_descarga if hasattr(libro, 'url_descarga') else '',
+                'año_publicacion': libro.año_publicacion if hasattr(libro, 'año_publicacion') else None,
             })
         except Libro.DoesNotExist:
             return JsonResponse({'error': 'Libro no encontrado'}, status=404)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
             libro = Libro.objects.create(
@@ -339,7 +353,9 @@ class LibroAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def put(self, request, libro_id):
+    def put(self, request, libro_id=None, *args, **kwargs):
+        if not libro_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             libro = Libro.objects.get(id=libro_id)
             data = json.loads(request.body)
@@ -347,8 +363,10 @@ class LibroAPIView(RecursoAPIView):
             libro.titulo = data.get('titulo', libro.titulo)
             libro.descripcion = data.get('descripcion', libro.descripcion)
             libro.autor = data.get('autor', libro.autor)
-            libro.url_descarga = data.get('url_descarga', libro.url_descarga)
-            libro.año_publicacion = data.get('año_publicacion', libro.año_publicacion)
+            if hasattr(libro, 'url_descarga'):
+                libro.url_descarga = data.get('url_descarga', libro.url_descarga)
+            if hasattr(libro, 'año_publicacion'):
+                libro.año_publicacion = data.get('año_publicacion', libro.año_publicacion)
             libro.save()
 
             return JsonResponse({'message': 'Libro actualizado exitosamente'})
@@ -357,7 +375,9 @@ class LibroAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def delete(self, request, libro_id):
+    def delete(self, request, libro_id=None, *args, **kwargs):
+        if not libro_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             libro = Libro.objects.get(id=libro_id)
             libro.delete()
@@ -366,10 +386,20 @@ class LibroAPIView(RecursoAPIView):
             return JsonResponse({'error': 'Libro no encontrado'}, status=404)
 
 
-class EnlaceAPIView(RecursoAPIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class EnlaceAPIView(View):
     """API para Enlaces"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if request.method in ['POST', 'PUT', 'DELETE']:
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'No autorizado'}, status=403)
+        return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, enlace_id):
+    def get(self, request, enlace_id=None, *args, **kwargs):
+        if not enlace_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             enlace = Enlace.objects.get(id=enlace_id)
             return JsonResponse({
@@ -377,12 +407,12 @@ class EnlaceAPIView(RecursoAPIView):
                 'titulo': enlace.titulo,
                 'descripcion': enlace.descripcion,
                 'url': enlace.url,
-                'categoria': enlace.categoria,
+                'categoria': enlace.categoria if hasattr(enlace, 'categoria') else '',
             })
         except Enlace.DoesNotExist:
             return JsonResponse({'error': 'Enlace no encontrado'}, status=404)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
             enlace = Enlace.objects.create(
@@ -400,7 +430,9 @@ class EnlaceAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def put(self, request, enlace_id):
+    def put(self, request, enlace_id=None, *args, **kwargs):
+        if not enlace_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             enlace = Enlace.objects.get(id=enlace_id)
             data = json.loads(request.body)
@@ -408,7 +440,8 @@ class EnlaceAPIView(RecursoAPIView):
             enlace.titulo = data.get('titulo', enlace.titulo)
             enlace.descripcion = data.get('descripcion', enlace.descripcion)
             enlace.url = data.get('url', enlace.url)
-            enlace.categoria = data.get('categoria', enlace.categoria)
+            if hasattr(enlace, 'categoria'):
+                enlace.categoria = data.get('categoria', enlace.categoria)
             enlace.save()
 
             return JsonResponse({'message': 'Enlace actualizado exitosamente'})
@@ -417,7 +450,9 @@ class EnlaceAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def delete(self, request, enlace_id):
+    def delete(self, request, enlace_id=None, *args, **kwargs):
+        if not enlace_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             enlace = Enlace.objects.get(id=enlace_id)
             enlace.delete()
@@ -426,10 +461,20 @@ class EnlaceAPIView(RecursoAPIView):
             return JsonResponse({'error': 'Enlace no encontrado'}, status=404)
 
 
-class ArticuloAPIView(RecursoAPIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class ArticuloAPIView(View):
     """API para Artículos"""
+    
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if request.method in ['POST', 'PUT', 'DELETE']:
+            if not request.user.is_staff:
+                return JsonResponse({'error': 'No autorizado'}, status=403)
+        return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, articulo_id):
+    def get(self, request, articulo_id=None, *args, **kwargs):
+        if not articulo_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             articulo = Articulo.objects.get(id=articulo_id)
             return JsonResponse({
@@ -437,35 +482,33 @@ class ArticuloAPIView(RecursoAPIView):
                 'titulo': articulo.titulo,
                 'descripcion': articulo.resumen if hasattr(articulo, 'resumen') else articulo.descripcion,
                 'autor': articulo.autor,
-                'url_fuente': articulo.url_fuente,
+                'url_fuente': articulo.url_fuente if hasattr(articulo, 'url_fuente') else '',
                 'fecha_publicacion': str(articulo.fecha_publicacion) if articulo.fecha_publicacion else None,
             })
         except Articulo.DoesNotExist:
             return JsonResponse({'error': 'Artículo no encontrado'}, status=404)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
 
-            # Crear diccionario base
             articulo_data = {
                 'titulo': data.get('titulo'),
                 'autor': data.get('autor'),
-                'url_fuente': data.get('url_fuente', ''),
                 'creado_por': request.user,
                 'activo': True
             }
 
-            # Agregar campo según el modelo
             if hasattr(Articulo, 'resumen'):
                 articulo_data['resumen'] = data.get('descripcion')
             else:
                 articulo_data['descripcion'] = data.get('descripcion')
 
-            # Fecha de publicación
+            if hasattr(Articulo, 'url_fuente'):
+                articulo_data['url_fuente'] = data.get('url_fuente', '')
+
             fecha_pub = data.get('fecha_publicacion')
             if fecha_pub:
-                from datetime import datetime
                 articulo_data['fecha_publicacion'] = datetime.strptime(fecha_pub, '%Y-%m-%d').date()
 
             articulo = Articulo.objects.create(**articulo_data)
@@ -477,25 +520,26 @@ class ArticuloAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def put(self, request, articulo_id):
+    def put(self, request, articulo_id=None, *args, **kwargs):
+        if not articulo_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             articulo = Articulo.objects.get(id=articulo_id)
             data = json.loads(request.body)
 
             articulo.titulo = data.get('titulo', articulo.titulo)
             articulo.autor = data.get('autor', articulo.autor)
-            articulo.url_fuente = data.get('url_fuente', articulo.url_fuente)
 
-            # Actualizar descripción/resumen según el modelo
             if hasattr(articulo, 'resumen'):
                 articulo.resumen = data.get('descripcion', articulo.resumen)
             else:
                 articulo.descripcion = data.get('descripcion', articulo.descripcion)
 
-            # Actualizar fecha si se proporciona
+            if hasattr(articulo, 'url_fuente'):
+                articulo.url_fuente = data.get('url_fuente', articulo.url_fuente)
+
             fecha_pub = data.get('fecha_publicacion')
             if fecha_pub:
-                from datetime import datetime
                 articulo.fecha_publicacion = datetime.strptime(fecha_pub, '%Y-%m-%d').date()
 
             articulo.save()
@@ -506,15 +550,15 @@ class ArticuloAPIView(RecursoAPIView):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
-    def delete(self, request, articulo_id):
+    def delete(self, request, articulo_id=None, *args, **kwargs):
+        if not articulo_id:
+            return JsonResponse({'error': 'ID requerido'}, status=400)
         try:
             articulo = Articulo.objects.get(id=articulo_id)
             articulo.delete()
             return JsonResponse({'message': 'Artículo eliminado exitosamente'})
         except Articulo.DoesNotExist:
             return JsonResponse({'error': 'Artículo no encontrado'}, status=404)
-
-
 
 
 # Panel de Administración de Recursos

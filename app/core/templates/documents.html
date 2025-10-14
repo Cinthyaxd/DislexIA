@@ -5,160 +5,951 @@
 
 {% block extra_head %}
 <style>
-    /* (Mantiene todos tus estilos anteriores) */
-    .resource-card { transition: all 0.3s ease; }
-    .resource-card:hover { transform: translateY(-8px); }
-    .resource-image { position: relative; overflow: hidden; }
+    .resource-card {
+        transition: all 0.3s ease;
+    }
+
+    .resource-card:hover {
+        transform: translateY(-8px);
+    }
+
+    .resource-image {
+        position: relative;
+        overflow: hidden;
+    }
+
     .resource-image::after {
         content: '';
         position: absolute;
-        bottom: 0; left: 0; right: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
         height: 50%;
-        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
     }
-    .category-badge { backdrop-filter: blur(10px); }
-    .filter-btn.active { background-color: #8b5cf6; color: white; }
-    .category-videos { background-color: rgba(239,68,68,0.9); }
-    .category-libros { background-color: rgba(59,130,246,0.9); }
-    .category-enlaces { background-color: rgba(34,197,94,0.9); }
-    .category-articulos { background-color: rgba(249,115,22,0.9); }
-    .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; }
-    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-    .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-    .modal { animation: fadeIn 0.2s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-    .tab-button.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+    .category-badge {
+        backdrop-filter: blur(10px);
+    }
+
+    .filter-btn.active {
+        background-color: #8b5cf6;
+        color: white;
+    }
+
+    /* Colores dinámicos para las categorías */
+    .category-videos { background-color: rgba(239, 68, 68, 0.9); }
+    .category-libros { background-color: rgba(59, 130, 246, 0.9); }
+    .category-enlaces { background-color: rgba(34, 197, 94, 0.9); }
+    .category-articulos { background-color: rgba(249, 115, 22, 0.9); }
+    
+    /* Estilos para videos embebidos */
+    .video-container {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; /* Ratio 16:9 */
+        height: 0;
+        overflow: hidden;
+        background: #000;
+    }
+    
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    /* Estilos para modals */
+    .modal-backdrop {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal {
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .tab-button.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- (Aquí va TODO tu contenido, igual que antes, sin cambios hasta el final del bloque "content") -->
-{{ block.super }}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <!-- Título -->
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Recursos sobre Dislexia</h1>
+            <p class="text-gray-600 dark:text-gray-400">Videos, libros, enlaces y artículos educativos</p>
+        </div>
+
+        <!-- Botón para agregar recursos (solo staff) -->
+        {% if user.is_staff %}
+        <div>
+            <button onclick="openCreateModal()" 
+               class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl transition-all duration-200 inline-flex items-center gap-2 shadow-md hover:shadow-lg">
+                <i class="fas fa-plus"></i>
+                <span>Agregar Recurso</span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Buscador y Filtros -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+        <!-- Buscador -->
+        <div class="relative flex-1 sm:max-w-md">
+            <input type="text" id="search-input" placeholder="Buscar recursos..."
+                class="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"></i>
+        </div>
+
+        <!-- Filtros de categoría -->
+        <div class="flex gap-2 flex-wrap">
+            <button
+                class="filter-btn px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium transition-all hover:bg-purple-50 dark:hover:bg-purple-900/30 text-gray-700 dark:text-gray-300 active"
+                data-filter="all">
+                Todos
+            </button>
+            <button
+                class="filter-btn px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium transition-all hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-700 dark:text-gray-300"
+                data-filter="videos">
+                Videos
+            </button>
+            <button
+                class="filter-btn px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium transition-all hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300"
+                data-filter="libros">
+                Libros
+            </button>
+            <button
+                class="filter-btn px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium transition-all hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-700 dark:text-gray-300"
+                data-filter="enlaces">
+                Enlaces
+            </button>
+            <button
+                class="filter-btn px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium transition-all hover:bg-orange-50 dark:hover:bg-orange-900/30 text-gray-700 dark:text-gray-300"
+                data-filter="articulos">
+                Artículos
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid de recursos -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="resources-container">
+        {% for recurso in recursos %}
+        <div class="resource-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
+             data-category="{{ recurso.categoria }}"
+             data-name="{{ recurso.titulo|lower }}"
+             data-description="{{ recurso.descripcion|lower }}">
+            
+            <!-- Mostrar video embebido si es un video -->
+            {% if recurso.categoria == 'videos' and recurso.video_embed %}
+            <div class="video-container">
+                {{ recurso.video_embed|safe }}
+            </div>
+            {% else %}
+            <!-- Mostrar imagen para otros recursos -->
+            <div class="resource-image relative h-48">
+                <img class="w-full h-full object-cover" 
+                     src="{% if recurso.imagen %}{{ recurso.imagen.url }}{% else %}{% static 'img/default-resource.png' %}{% endif %}" 
+                     alt="{{ recurso.titulo }}" />
+                
+                <!-- Badge de categoría -->
+                <div class="absolute top-4 right-4">
+                    <span class="category-badge px-3 py-1 category-{{ recurso.categoria }} text-white text-xs font-semibold rounded-full">
+                        {{ recurso.get_categoria_display }}
+                    </span>
+                </div>
+                
+                <!-- Información flotante -->
+                <div class="absolute bottom-4 left-4 z-10">
+                    <div class="flex items-center gap-2">
+                        {% if recurso.duracion %}
+                        <div class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full">
+                            <span class="text-white text-sm font-medium">⏱️ {{ recurso.duracion }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="p-6">
+                <!-- Badge de categoría para videos -->
+                {% if recurso.categoria == 'videos' %}
+                <div class="mb-3 flex items-center justify-between">
+                    <div>
+                        <span class="category-badge px-3 py-1 category-{{ recurso.categoria }} text-white text-xs font-semibold rounded-full">
+                            {{ recurso.get_categoria_display }}
+                        </span>
+                        {% if recurso.duracion %}
+                        <span class="ml-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-full">
+                            ⏱️ {{ recurso.duracion }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if user.is_staff %}
+                    <div class="flex gap-1">
+                        <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                                class="text-blue-600 hover:text-blue-700 p-1" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                                class="text-red-600 hover:text-red-700 p-1" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                {% if user.is_staff %}
+                <div class="absolute top-2 right-2 flex gap-1 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-md">
+                    <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                            class="text-blue-600 hover:text-blue-700 p-1" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                            class="text-red-600 hover:text-red-700 p-1" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endif %}
+                {% endif %}
+                
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ recurso.titulo }}</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">
+                    {{ recurso.descripcion|truncatewords:20 }}
+                </p>
+
+                <!-- Estadísticas -->
+                <div class="flex items-center gap-4 mb-4 text-sm text-gray-500 dark:text-gray-400">
+                    {% if recurso.autor %}
+                    <div class="flex items-center gap-1">
+                        <i class="fas fa-user"></i>
+                        <span>{{ recurso.autor }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Botón para ver recurso -->
+                {% if recurso.url_externa %}
+                <a href="{{ recurso.url_externa }}" target="_blank"
+                   class="block w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 text-center shadow-md hover:shadow-lg">
+                    <i class="fas fa-{% if recurso.categoria == 'videos' %}play{% elif recurso.categoria == 'libros' %}download{% elif recurso.categoria == 'enlaces' %}external-link-alt{% else %}file-alt{% endif %}"></i>
+                    {% if recurso.categoria == 'libros' %}Descargar{% elif recurso.categoria == 'enlaces' %}Visitar{% else %}Ver más{% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <div class="text-gray-400 dark:text-gray-600 mb-4">
+                <i class="fas fa-book-open text-6xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No hay recursos disponibles</h3>
+            <p class="text-gray-500 dark:text-gray-500">
+                {% if user.is_staff %}
+                Haz clic en "Agregar Recurso" para crear el primer recurso.
+                {% else %}
+                Los recursos están siendo agregados. Vuelve pronto.
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Stats Section -->
+    {% if recursos %}
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-center hover:shadow-lg transition-shadow">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-video text-red-600 dark:text-red-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ videos.count }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Videos educativos</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-center hover:shadow-lg transition-shadow">
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-book text-blue-600 dark:text-blue-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ libros.count }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Libros disponibles</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-center hover:shadow-lg transition-shadow">
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-link text-green-600 dark:text-green-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ enlaces.count }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Enlaces útiles</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-center hover:shadow-lg transition-shadow">
+            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-newspaper text-orange-600 dark:text-orange-400 text-xl"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white mb-1">{{ articulos.count }}</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Artículos científicos</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Crear/Editar Recursos -->
+<div id="resourceModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop fixed inset-0" onclick="closeModal()"></div>
+    <div class="fixed inset-0 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full relative">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white" id="modalTitle">Agregar Recurso</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Tabs para tipo de recurso -->
+                <div class="flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <button onclick="switchTab('videos')" id="tab-videos" 
+                            class="tab-button px-4 py-2 rounded-lg font-medium transition-all active">
+                        <i class="fas fa-video mr-2"></i>Video
+                    </button>
+                    <button onclick="switchTab('libros')" id="tab-libros" 
+                            class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-book mr-2"></i>Libro
+                    </button>
+                    <button onclick="switchTab('enlaces')" id="tab-enlaces" 
+                            class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-link mr-2"></i>Enlace
+                    </button>
+                    <button onclick="switchTab('articulos')" id="tab-articulos" 
+                            class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-newspaper mr-2"></i>Artículo
+                    </button>
+                </div>
+
+                <!-- Formulario -->
+                <form id="resourceForm" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                    {% csrf_token %}
+                    <input type="hidden" id="resourceId" name="id">
+                    <input type="hidden" id="resourceType" name="type" value="videos">
+
+                    <!-- Campos comunes -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Título *
+                        </label>
+                        <input type="text" id="titulo" name="titulo" required
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Descripción *
+                        </label>
+                        <textarea id="descripcion" name="descripcion" rows="3" required
+                                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+                    </div>
+
+                    <!-- Campos específicos para Videos -->
+                    <div id="fields-videos" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Código Embed de YouTube *
+                            </label>
+                            <textarea id="codigo_embed" name="codigo_embed" rows="3" placeholder="Pega aquí el código iframe de YouTube..."
+                                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Ve a YouTube → Compartir → Insertar → Copia el código completo</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Duración (opcional)
+                            </label>
+                            <input type="text" id="duracion" name="duracion" placeholder="Ej: 10:30"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para Libros -->
+                    <div id="fields-libros" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Autor *
+                            </label>
+                            <input type="text" id="autor_libro" name="autor" 
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                URL de Descarga (opcional)
+                            </label>
+                            <input type="url" id="url_descarga" name="url_descarga" placeholder="https://..."
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Año de Publicación
+                            </label>
+                            <input type="number" id="año_publicacion" name="año_publicacion" min="1900" max="2100"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para Enlaces -->
+                    <div id="fields-enlaces" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                URL *
+                            </label>
+                            <input type="url" id="url_enlace" name="url" placeholder="https://..." 
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Categoría (opcional)
+                            </label>
+                            <input type="text" id="categoria" name="categoria" placeholder="Ej: Herramientas, Recursos educativos..."
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos para Artículos -->
+                    <div id="fields-articulos" class="space-y-4 hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Autor *
+                            </label>
+                            <input type="text" id="autor_articulo" name="autor" 
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                URL del Artículo (opcional)
+                            </label>
+                            <input type="url" id="url_fuente" name="url_fuente" placeholder="https://..."
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Fecha de Publicación
+                            </label>
+                            <input type="date" id="fecha_publicacion" name="fecha_publicacion"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+                    <button onclick="closeModal()" type="button"
+                            class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onclick="submitForm()" type="button"
+                            class="px-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-(function initResourcesPage() {
-    console.log('Inicializando página de recursos...');
+    (function initResourcesPage() {
+        console.log('Inicializando página de recursos...');
 
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const resourceCards = document.querySelectorAll('.resource-card');
-    const searchInput = document.getElementById('search-input');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const resourceCards = document.querySelectorAll('.resource-card');
+        const searchInput = document.getElementById('search-input');
 
-    // === FILTRADO POR CATEGORÍA ===
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            filterButtons.forEach(btn => {
-                btn.classList.remove('active', 'bg-purple-500', 'text-white');
-                btn.classList.add('text-gray-700', 'dark:text-gray-300');
-            });
+        // Filtrado por categoría
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-purple-500', 'text-white');
+                    btn.classList.add('text-gray-700', 'dark:text-gray-300');
+                });
 
-            this.classList.add('active', 'bg-purple-500', 'text-white');
-            this.classList.remove('text-gray-700', 'dark:text-gray-300');
+                this.classList.add('active', 'bg-purple-500', 'text-white');
+                this.classList.remove('text-gray-700', 'dark:text-gray-300');
 
-            const filter = this.getAttribute('data-filter');
+                const filter = this.getAttribute('data-filter');
 
-            resourceCards.forEach(card => {
-                if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    });
-
-    // === BÚSQUEDA DE RECURSOS ===
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const term = this.value.toLowerCase();
-            resourceCards.forEach(card => {
-                const name = card.getAttribute('data-name') || '';
-                const desc = card.getAttribute('data-description') || '';
-                if (name.includes(term) || desc.includes(term)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                resourceCards.forEach(card => {
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = card.getAttribute('data-category') === filter ? 'block' : 'none';
+                    }
+                });
             });
         });
+
+        // Búsqueda de recursos
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+
+                resourceCards.forEach(card => {
+                    const name = card.getAttribute('data-name') || '';
+                    const description = card.getAttribute('data-description') || '';
+
+                    if (name.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        console.log('Página de recursos inicializada correctamente');
+    })();
+
+    // Funciones del Modal
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Agregar Recurso';
+        document.getElementById('resourceForm').reset();
+        document.getElementById('resourceId').value = '';
+        switchTab('videos');
+        document.getElementById('resourceModal').classList.remove('hidden');
     }
-})();
 
-// === FUNCIONES DEL MODAL ===
-function openCreateModal() {
-    document.getElementById('resourceModal').classList.remove('hidden');
-    document.getElementById('modalTitle').textContent = 'Agregar Recurso';
-    document.getElementById('resourceForm').reset();
-    document.getElementById('resourceId').value = '';
-    document.getElementById('resourceType').value = 'videos';
-    switchTab('videos');
-}
+    function closeModal() {
+        document.getElementById('resourceModal').classList.add('hidden');
+    }
 
-function closeModal() {
-    document.getElementById('resourceModal').classList.add('hidden');
-}
+    function switchTab(type) {
+        // Actualizar tabs
+        const tabs = document.querySelectorAll('.tab-button');
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.classList.add('text-gray-600', 'dark:text-gray-400');
+        });
+        
+        const activeTab = document.getElementById(`tab-${type}`);
+        activeTab.classList.add('active');
+        activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
 
-function switchTab(tabName) {
-    const tabs = ['videos', 'libros', 'enlaces', 'articulos'];
-    tabs.forEach(tab => {
-        const button = document.getElementById(`tab-${tab}`);
-        const fields = document.getElementById(`fields-${tab}`);
-        if (tab === tabName) {
-            button.classList.add('active');
-            fields.classList.remove('hidden');
-        } else {
-            button.classList.remove('active');
-            fields.classList.add('hidden');
+        // Mostrar/ocultar campos
+        document.getElementById('fields-videos').classList.add('hidden');
+        document.getElementById('fields-libros').classList.add('hidden');
+        document.getElementById('fields-enlaces').classList.add('hidden');
+        document.getElementById('fields-articulos').classList.add('hidden');
+        
+        document.getElementById(`fields-${type}`).classList.remove('hidden');
+        document.getElementById('resourceType').value = type;
+    }
+
+    async function submitForm() {
+        const form = document.getElementById('resourceForm');
+        const formData = new FormData(form);
+        const resourceId = document.getElementById('resourceId').value;
+        const resourceType = document.getElementById('resourceType').value;
+
+        // Validar campos requeridos
+        const titulo = document.getElementById('titulo').value.trim();
+        const descripcion = document.getElementById('descripcion').value.trim();
+
+        if (!titulo || !descripcion) {
+            alert('Por favor completa los campos obligatorios (Título y Descripción)');
+            return;
+        }
+
+        // Validaciones específicas por tipo
+        if (resourceType === 'videos') {
+            const codigoEmbed = document.getElementById('codigo_embed').value.trim();
+            if (!codigoEmbed) {
+                alert('Por favor ingresa el código embed de YouTube');
+                return;
+            }
+        } else if (resourceType === 'libros') {
+            const autor = document.getElementById('autor_libro').value.trim();
+            if (!autor) {
+                alert('Por favor ingresa el autor del libro');
+                return;
+            }
+        } else if (resourceType === 'enlaces') {
+            const url = document.getElementById('url_enlace').value.trim();
+            if (!url) {
+                alert('Por favor ingresa la URL del enlace');
+                return;
+            }
+        } else if (resourceType === 'articulos') {
+            const autor = document.getElementById('autor_articulo').value.trim();
+            if (!autor) {
+                alert('Por favor ingresa el autor del artículo');
+                return;
+            }
+        }
+
+        // Preparar datos para enviar
+        const data = {
+            titulo: titulo,
+            descripcion: descripcion
+        };
+
+        // Agregar campos específicos según el tipo
+        if (resourceType === 'videos') {
+            data.codigo_embed = document.getElementById('codigo_embed').value;
+            data.duracion = document.getElementById('duracion').value;
+        } else if (resourceType === 'libros') {
+            data.autor = document.getElementById('autor_libro').value;
+            data.url_descarga = document.getElementById('url_descarga').value;
+            data.año_publicacion = document.getElementById('año_publicacion').value;
+        } else if (resourceType === 'enlaces') {
+            data.url = document.getElementById('url_enlace').value;
+            data.categoria = document.getElementById('categoria').value;
+        } else if (resourceType === 'articulos') {
+            data.autor = document.getElementById('autor_articulo').value;
+            data.url_fuente = document.getElementById('url_fuente').value;
+            data.fecha_publicacion = document.getElementById('fecha_publicacion').value;
+        }
+
+        try {
+            const url = resourceId 
+                ? `/api/recursos/${resourceType}/${resourceId}/` 
+                : `/api/recursos/${resourceType}/`;
+            const method = resourceId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert(resourceId ? 'Recurso actualizado exitosamente' : 'Recurso creado exitosamente');
+                closeModal();
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.error || 'No se pudo guardar el recurso'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al conectar con el servidor');
+        }
+    }
+
+    async function editRecurso(type, id) {
+        try {
+            const response = await fetch(`/api/recursos/${type}/${id}/`);
+            if (!response.ok) throw new Error('No se pudo cargar el recurso');
+            
+            const data = await response.json();
+            
+            // Abrir modal en modo edición
+            document.getElementById('modalTitle').textContent = 'Editar Recurso';
+            document.getElementById('resourceId').value = id;
+            switchTab(type);
+            
+            // Llenar campos comunes
+            document.getElementById('titulo').value = data.titulo || '';
+            document.getElementById('descripcion').value = data.descripcion || '';
+            
+            // Llenar campos específicos
+            if (type === 'videos') {
+                document.getElementById('codigo_embed').value = data.codigo_embed || '';
+                document.getElementById('duracion').value = data.duracion || '';
+            } else if (type === 'libros') {
+                document.getElementById('autor_libro').value = data.autor || '';
+                document.getElementById('url_descarga').value = data.url_descarga || '';
+                document.getElementById('año_publicacion').value = data.año_publicacion || '';
+            } else if (type === 'enlaces') {
+                document.getElementById('url_enlace').value = data.url || '';
+                document.getElementById('categoria').value = data.categoria || '';
+            } else if (type === 'articulos') {
+                document.getElementById('autor_articulo').value = data.autor || '';
+                document.getElementById('url_fuente').value = data.url_fuente || '';
+                document.getElementById('fecha_publicacion').value = data.fecha_publicacion || '';
+            }
+            
+            document.getElementById('resourceModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar el recurso para editar');
+        }
+    }
+
+    async function deleteRecurso(type, id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este recurso?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/recursos/${type}/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            });
+
+            if (response.ok) {
+                alert('Recurso eliminado exitosamente');
+                location.reload();
+            } else {
+                alert('Error al eliminar el recurso');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al conectar con el servidor');
+        }
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
         }
     });
-    document.getElementById('resourceType').value = tabName;
-}
+</script>
+{% endblock %} {
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
 
-// === FUNCIONES DE CRUD (básicas para ejemplo) ===
-function submitForm() {
+                resourceCards.forEach(card => {
+                    const name = card.getAttribute('data-name') || '';
+                    const description = card.getAttribute('data-description') || '';
+
+                    if (name.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        console.log('Página de recursos inicializada correctamente');
+    })();
+
+    // Funciones del Modal
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Agregar Recurso';
+        document.getElementById('resourceForm').reset();
+        document.getElementById('resourceId').value = '';
+        switchTab('videos');
+        document.getElementById('resourceModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('resourceModal').classList.add('hidden');
+    }
+
+    function switchTab(type) {
+        // Actualizar tabs
+        const tabs = document.querySelectorAll('.tab-button');
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            tab.classList.add('text-gray-600', 'dark:text-gray-400');
+        });
+        
+        const activeTab = document.getElementById(`tab-${type}`);
+        activeTab.classList.add('active');
+        activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
+
+        // Mostrar/ocultar campos
+        document.getElementById('fields-videos').classList.add('hidden');
+        document.getElementById('fields-libros').classList.add('hidden');
+        document.getElementById('fields-enlaces').classList.add('hidden');
+        document.getElementById('fields-articulos').classList.add('hidden');
+        
+        document.getElementById(`fields-${type}`).classList.remove('hidden');
+        document.getElementById('resourceType').value = type;
+    }
+
+    async function submitForm() {
     const form = document.getElementById('resourceForm');
     const formData = new FormData(form);
+    const resourceId = document.getElementById('resourceId').value;
+    const resourceType = document.getElementById('resourceType').value;
 
-    fetch("{% url 'crear_recurso' %}", {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') }
-    })
-    .then(response => {
+    // Validar campos requeridos
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+
+    if (!titulo || !descripcion) {
+        alert('Por favor completa los campos obligatorios (Título y Descripción)');
+        return;
+    }
+
+    // Validaciones específicas por tipo
+    if (resourceType === 'videos') {
+        const codigoEmbed = document.getElementById('codigo_embed').value.trim();
+        if (!codigoEmbed) {
+            alert('Por favor ingresa el código embed de YouTube');
+            return;
+        }
+    } else if (resourceType === 'libros') {
+        const autor = document.getElementById('autor_libro').value.trim();
+        if (!autor) {
+            alert('Por favor ingresa el autor del libro');
+            return;
+        }
+    } else if (resourceType === 'enlaces') {
+        const urlEnlace = document.getElementById('url_enlace').value.trim();
+        if (!urlEnlace) {
+            alert('Por favor ingresa la URL del enlace');
+            return;
+        }
+    } else if (resourceType === 'articulos') {
+        const autor = document.getElementById('autor_articulo').value.trim();
+        if (!autor) {
+            alert('Por favor ingresa el autor del artículo');
+            return;
+        }
+    }
+
+    // Preparar datos para enviar
+    const data = {
+        titulo: titulo,
+        descripcion: descripcion
+    };
+
+    // Agregar campos específicos según el tipo
+    if (resourceType === 'videos') {
+        data.codigo_embed = document.getElementById('codigo_embed').value;
+        data.duracion = document.getElementById('duracion').value;
+    } else if (resourceType === 'libros') {
+        data.autor = document.getElementById('autor_libro').value;
+        data.url_descarga = document.getElementById('url_descarga').value;
+        data.año_publicacion = document.getElementById('año_publicacion').value;
+    } else if (resourceType === 'enlaces') {
+        data.url = document.getElementById('url_enlace').value;
+        data.categoria = document.getElementById('categoria').value;
+    } else if (resourceType === 'articulos') {
+        data.autor = document.getElementById('autor_articulo').value;
+        data.url_fuente = document.getElementById('url_fuente').value;
+        data.fecha_publicacion = document.getElementById('fecha_publicacion').value;
+    }
+
+    try {
+        const apiUrl = resourceId 
+            ? `/api/recursos/${resourceType}/${resourceId}/` 
+            : `/api/recursos/${resourceType}/`;
+        const method = resourceId ? 'PUT' : 'POST';
+
+        const response = await fetch(apiUrl, {
+            method: method,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
         if (response.ok) {
-            alert('Recurso guardado correctamente');
+            alert(resourceId ? 'Recurso actualizado exitosamente' : 'Recurso creado exitosamente');
+            closeModal();
             location.reload();
         } else {
-            alert('Error al guardar el recurso');
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'No se pudo guardar el recurso'));
         }
-    })
-    .catch(err => console.error('Error:', err));
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al conectar con el servidor');
+    }
 }
 
-function editRecurso(tipo, id) {
-    console.log(`Editar recurso tipo ${tipo} ID ${id}`);
-    // Aquí puedes cargar los datos con fetch() e insertar en el modal
-    openCreateModal();
-    document.getElementById('modalTitle').textContent = 'Editar Recurso';
-}
-
-function deleteRecurso(tipo, id) {
-    if (!confirm('¿Seguro que deseas eliminar este recurso?')) return;
-
-    fetch(`/recursos/eliminar/${id}/`, {
-        method: 'DELETE',
-        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('Recurso eliminado');
-            location.reload();
-        } else {
-            alert('Error al eliminar el recurso');
+    async function editRecurso(type, id) {
+        try {
+            const response = await fetch(`/api/recursos/${type}/${id}/`);
+            if (!response.ok) throw new Error('No se pudo cargar el recurso');
+            
+            const data = await response.json();
+            
+            // Abrir modal en modo edición
+            document.getElementById('modalTitle').textContent = 'Editar Recurso';
+            document.getElementById('resourceId').value = id;
+            switchTab(type);
+            
+            // Llenar campos comunes
+            document.getElementById('titulo').value = data.titulo || '';
+            document.getElementById('descripcion').value = data.descripcion || '';
+            
+            // Llenar campos específicos
+            if (type === 'videos') {
+                document.getElementById('codigo_embed').value = data.codigo_embed || '';
+                document.getElementById('duracion').value = data.duracion || '';
+            } else if (type === 'libros') {
+                document.getElementById('autor_libro').value = data.autor || '';
+                document.getElementById('url_descarga').value = data.url_descarga || '';
+                document.getElementById('año_publicacion').value = data.año_publicacion || '';
+            } else if (type === 'enlaces') {
+                document.getElementById('url_enlace').value = data.url || '';
+                document.getElementById('categoria').value = data.categoria || '';
+            } else if (type === 'articulos') {
+                document.getElementById('autor_articulo').value = data.autor || '';
+                document.getElementById('url_fuente').value = data.url_fuente || '';
+                document.getElementById('fecha_publicacion').value = data.fecha_publicacion || '';
+            }
+            
+            document.getElementById('resourceModal').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar el recurso para editar');
         }
-    })
-    .catch(err => console.error(err));
-}
-</script>
-{% endblock %}
+    }
+
+    async function deleteRecurso(type, id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este recurso?')) {
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            const response = await fetch(`/api/recursos/${type}/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                }
+            });
+
+            if (response.ok) {
+                alert('Recurso eliminado exitosamente');
+                location.reload();
+            } else {
+                alert('Error al eliminar el recurso');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al conectar con el servidor');
+        }
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });

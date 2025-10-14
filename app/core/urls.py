@@ -29,20 +29,20 @@ urlpatterns = [
     path('citas/<int:cita_id>/eliminar/', eliminar_cita, name='eliminar_cita'),
     path('citas/<int:cita_id>/completar/', marcar_cita_completada, name='marcar_cita_completada'),
 
-    # Recursos - Videos
-    path('api/recursos/videos/', views.VideoAPIView.as_view(), name='api_video_create'),
+    
+    # ==================== API RECURSOS - VIDEOS ====================
+    path('api/recursos/videos/', views.VideoAPIView.as_view(), name='api_video_list'),
     path('api/recursos/videos/<int:video_id>/', views.VideoAPIView.as_view(), name='api_video_detail'),
 
-    # API para Libros
-    path('api/recursos/libros/', views.LibroAPIView.as_view(), name='api_libro_create'),
+# ==================== API RECURSOS - LIBROS ====================
+    path('api/recursos/libros/', views.LibroAPIView.as_view(), name='api_libro_list'),
     path('api/recursos/libros/<int:libro_id>/', views.LibroAPIView.as_view(), name='api_libro_detail'),
 
-    # API para Enlaces
-    path('api/recursos/enlaces/', views.EnlaceAPIView.as_view(), name='api_enlace_create'),
+# ==================== API RECURSOS - ENLACES ====================
+    path('api/recursos/enlaces/', views.EnlaceAPIView.as_view(), name='api_enlace_list'),
     path('api/recursos/enlaces/<int:enlace_id>/', views.EnlaceAPIView.as_view(), name='api_enlace_detail'),
-    path('crear-recurso/', views.CrearRecursoView.as_view(), name='crear_recurso'),
 
-    # API para Artículos
-    path('api/recursos/articulos/', views.ArticuloAPIView.as_view(), name='api_articulo_create'),
+# ==================== API RECURSOS - ARTÍCULOS ====================
+    path('api/recursos/articulos/', views.ArticuloAPIView.as_view(), name='api_articulo_list'),
     path('api/recursos/articulos/<int:articulo_id>/', views.ArticuloAPIView.as_view(), name='api_articulo_detail'),
 ]
