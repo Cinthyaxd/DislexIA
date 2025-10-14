@@ -42,7 +42,7 @@
     .category-libros { background-color: rgba(59, 130, 246, 0.9); }
     .category-enlaces { background-color: rgba(34, 197, 94, 0.9); }
     .category-articulos { background-color: rgba(249, 115, 22, 0.9); }
-    
+
     /* Estilos para videos embebidos */
     .video-container {
         position: relative;
@@ -52,7 +52,7 @@
         overflow: hidden;
         background: #000;
     }
-    
+
     .video-container iframe {
         position: absolute;
         top: 0;
@@ -103,7 +103,7 @@
         <!-- Botón para agregar recursos (solo staff) -->
         {% if user.is_staff %}
         <div>
-            <button onclick="openCreateModal()" 
+            <button onclick="openCreateModal()"
                class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl transition-all duration-200 inline-flex items-center gap-2 shadow-md hover:shadow-lg">
                 <i class="fas fa-plus"></i>
                 <span>Agregar Recurso</span>
@@ -158,7 +158,7 @@
              data-category="{{ recurso.categoria }}"
              data-name="{{ recurso.titulo|lower }}"
              data-description="{{ recurso.descripcion|lower }}">
-            
+
             <!-- Mostrar video embebido si es un video -->
             {% if recurso.categoria == 'videos' and recurso.video_embed %}
             <div class="video-container">
@@ -167,17 +167,17 @@
             {% else %}
             <!-- Mostrar imagen para otros recursos -->
             <div class="resource-image relative h-48">
-                <img class="w-full h-full object-cover" 
-                     src="{% if recurso.imagen %}{{ recurso.imagen.url }}{% else %}{% static 'img/default-resource.png' %}{% endif %}" 
+                <img class="w-full h-full object-cover"
+                     src="{% if recurso.imagen %}{{ recurso.imagen.url }}{% else %}{% static 'img/default-resource.png' %}{% endif %}"
                      alt="{{ recurso.titulo }}" />
-                
+
                 <!-- Badge de categoría -->
                 <div class="absolute top-4 right-4">
                     <span class="category-badge px-3 py-1 category-{{ recurso.categoria }} text-white text-xs font-semibold rounded-full">
                         {{ recurso.get_categoria_display }}
                     </span>
                 </div>
-                
+
                 <!-- Información flotante -->
                 <div class="absolute bottom-4 left-4 z-10">
                     <div class="flex items-center gap-2">
@@ -207,11 +207,11 @@
                     </div>
                     {% if user.is_staff %}
                     <div class="flex gap-1">
-                        <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                        <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})"
                                 class="text-blue-600 hover:text-blue-700 p-1" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                        <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})"
                                 class="text-red-600 hover:text-red-700 p-1" title="Eliminar">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -221,18 +221,18 @@
                 {% else %}
                 {% if user.is_staff %}
                 <div class="absolute top-2 right-2 flex gap-1 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-md">
-                    <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                    <button onclick="editRecurso('{{ recurso.categoria }}', {{ recurso.id }})"
                             class="text-blue-600 hover:text-blue-700 p-1" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})" 
+                    <button onclick="deleteRecurso('{{ recurso.categoria }}', {{ recurso.id }})"
                             class="text-red-600 hover:text-red-700 p-1" title="Eliminar">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
                 {% endif %}
                 {% endif %}
-                
+
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ recurso.titulo }}</h3>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 leading-relaxed">
                     {{ recurso.descripcion|truncatewords:20 }}
@@ -329,19 +329,19 @@
 
                 <!-- Tabs para tipo de recurso -->
                 <div class="flex gap-2 p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                    <button onclick="switchTab('videos')" id="tab-videos" 
+                    <button onclick="switchTab('videos')" id="tab-videos"
                             class="tab-button px-4 py-2 rounded-lg font-medium transition-all active">
                         <i class="fas fa-video mr-2"></i>Video
                     </button>
-                    <button onclick="switchTab('libros')" id="tab-libros" 
+                    <button onclick="switchTab('libros')" id="tab-libros"
                             class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
                         <i class="fas fa-book mr-2"></i>Libro
                     </button>
-                    <button onclick="switchTab('enlaces')" id="tab-enlaces" 
+                    <button onclick="switchTab('enlaces')" id="tab-enlaces"
                             class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
                         <i class="fas fa-link mr-2"></i>Enlace
                     </button>
-                    <button onclick="switchTab('articulos')" id="tab-articulos" 
+                    <button onclick="switchTab('articulos')" id="tab-articulos"
                             class="tab-button px-4 py-2 rounded-lg font-medium transition-all text-gray-600 dark:text-gray-400">
                         <i class="fas fa-newspaper mr-2"></i>Artículo
                     </button>
@@ -395,7 +395,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Autor *
                             </label>
-                            <input type="text" id="autor_libro" name="autor" 
+                            <input type="text" id="autor_libro" name="autor"
                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         </div>
                         <div>
@@ -420,7 +420,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 URL *
                             </label>
-                            <input type="url" id="url_enlace" name="url" placeholder="https://..." 
+                            <input type="url" id="url_enlace" name="url" placeholder="https://..."
                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         </div>
                         <div>
@@ -438,7 +438,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Autor *
                             </label>
-                            <input type="text" id="autor_articulo" name="autor" 
+                            <input type="text" id="autor_articulo" name="autor"
                                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         </div>
                         <div>
@@ -478,259 +478,201 @@
 
 {% block extra_scripts %}
 <script>
-    (function initResourcesPage() {
-        console.log('Inicializando página de recursos...');
+(function initResourcesPage() {
+    console.log('Inicializando página de recursos...');
 
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const resourceCards = document.querySelectorAll('.resource-card');
-        const searchInput = document.getElementById('search-input');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const resourceCards = document.querySelectorAll('.resource-card');
+    const searchInput = document.getElementById('search-input');
 
-        // Filtrado por categoría
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                filterButtons.forEach(btn => {
-                    btn.classList.remove('active', 'bg-purple-500', 'text-white');
-                    btn.classList.add('text-gray-700', 'dark:text-gray-300');
-                });
-
-                this.classList.add('active', 'bg-purple-500', 'text-white');
-                this.classList.remove('text-gray-700', 'dark:text-gray-300');
-
-                const filter = this.getAttribute('data-filter');
-
-                resourceCards.forEach(card => {
-                    if (filter === 'all') {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = card.getAttribute('data-category') === filter ? 'block' : 'none';
-                    }
-                });
-            });
-        });
-
-        // Búsqueda de recursos
-        if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                const searchTerm = this.value.toLowerCase();
-
-                resourceCards.forEach(card => {
-                    const name = card.getAttribute('data-name') || '';
-                    const description = card.getAttribute('data-description') || '';
-
-                    if (name.includes(searchTerm) || description.includes(searchTerm)) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        }
-
-        console.log('Página de recursos inicializada correctamente');
-    })();
-
-    // Funciones del Modal
-    function openCreateModal() {
-        document.getElementById('modalTitle').textContent = 'Agregar Recurso';
-        document.getElementById('resourceForm').reset();
-        document.getElementById('resourceId').value = '';
-        switchTab('videos');
-        document.getElementById('resourceModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-        document.getElementById('resourceModal').classList.add('hidden');
-    }
-
-    function switchTab(type) {
-        // Actualizar tabs
-        const tabs = document.querySelectorAll('.tab-button');
-        tabs.forEach(tab => {
-            tab.classList.remove('active');
-            tab.classList.add('text-gray-600', 'dark:text-gray-400');
-        });
-        
-        const activeTab = document.getElementById(`tab-${type}`);
-        activeTab.classList.add('active');
-        activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
-
-        // Mostrar/ocultar campos
-        document.getElementById('fields-videos').classList.add('hidden');
-        document.getElementById('fields-libros').classList.add('hidden');
-        document.getElementById('fields-enlaces').classList.add('hidden');
-        document.getElementById('fields-articulos').classList.add('hidden');
-        
-        document.getElementById(`fields-${type}`).classList.remove('hidden');
-        document.getElementById('resourceType').value = type;
-    }
-
-    async function submitForm() {
-        const form = document.getElementById('resourceForm');
-        const formData = new FormData(form);
-        const resourceId = document.getElementById('resourceId').value;
-        const resourceType = document.getElementById('resourceType').value;
-
-        // Validar campos requeridos
-        const titulo = document.getElementById('titulo').value.trim();
-        const descripcion = document.getElementById('descripcion').value.trim();
-
-        if (!titulo || !descripcion) {
-            alert('Por favor completa los campos obligatorios (Título y Descripción)');
-            return;
-        }
-
-        // Validaciones específicas por tipo
-        if (resourceType === 'videos') {
-            const codigoEmbed = document.getElementById('codigo_embed').value.trim();
-            if (!codigoEmbed) {
-                alert('Por favor ingresa el código embed de YouTube');
-                return;
-            }
-        } else if (resourceType === 'libros') {
-            const autor = document.getElementById('autor_libro').value.trim();
-            if (!autor) {
-                alert('Por favor ingresa el autor del libro');
-                return;
-            }
-        } else if (resourceType === 'enlaces') {
-            const url = document.getElementById('url_enlace').value.trim();
-            if (!url) {
-                alert('Por favor ingresa la URL del enlace');
-                return;
-            }
-        } else if (resourceType === 'articulos') {
-            const autor = document.getElementById('autor_articulo').value.trim();
-            if (!autor) {
-                alert('Por favor ingresa el autor del artículo');
-                return;
-            }
-        }
-
-        // Preparar datos para enviar
-        const data = {
-            titulo: titulo,
-            descripcion: descripcion
-        };
-
-        // Agregar campos específicos según el tipo
-        if (resourceType === 'videos') {
-            data.codigo_embed = document.getElementById('codigo_embed').value;
-            data.duracion = document.getElementById('duracion').value;
-        } else if (resourceType === 'libros') {
-            data.autor = document.getElementById('autor_libro').value;
-            data.url_descarga = document.getElementById('url_descarga').value;
-            data.año_publicacion = document.getElementById('año_publicacion').value;
-        } else if (resourceType === 'enlaces') {
-            data.url = document.getElementById('url_enlace').value;
-            data.categoria = document.getElementById('categoria').value;
-        } else if (resourceType === 'articulos') {
-            data.autor = document.getElementById('autor_articulo').value;
-            data.url_fuente = document.getElementById('url_fuente').value;
-            data.fecha_publicacion = document.getElementById('fecha_publicacion').value;
-        }
-
-        try {
-            const url = resourceId 
-                ? `/api/recursos/${resourceType}/${resourceId}/` 
-                : `/api/recursos/${resourceType}/`;
-            const method = resourceId ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
+    // Filtrado por categoría
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active', 'bg-purple-500', 'text-white');
+                btn.classList.add('text-gray-700', 'dark:text-gray-300');
             });
 
-            if (response.ok) {
-                alert(resourceId ? 'Recurso actualizado exitosamente' : 'Recurso creado exitosamente');
-                closeModal();
-                location.reload();
-            } else {
-                const error = await response.json();
-                alert('Error: ' + (error.error || 'No se pudo guardar el recurso'));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al conectar con el servidor');
-        }
-    }
+            this.classList.add('active', 'bg-purple-500', 'text-white');
+            this.classList.remove('text-gray-700', 'dark:text-gray-300');
 
-    async function editRecurso(type, id) {
-        try {
-            const response = await fetch(`/api/recursos/${type}/${id}/`);
-            if (!response.ok) throw new Error('No se pudo cargar el recurso');
-            
-            const data = await response.json();
-            
-            // Abrir modal en modo edición
-            document.getElementById('modalTitle').textContent = 'Editar Recurso';
-            document.getElementById('resourceId').value = id;
-            switchTab(type);
-            
-            // Llenar campos comunes
-            document.getElementById('titulo').value = data.titulo || '';
-            document.getElementById('descripcion').value = data.descripcion || '';
-            
-            // Llenar campos específicos
-            if (type === 'videos') {
-                document.getElementById('codigo_embed').value = data.codigo_embed || '';
-                document.getElementById('duracion').value = data.duracion || '';
-            } else if (type === 'libros') {
-                document.getElementById('autor_libro').value = data.autor || '';
-                document.getElementById('url_descarga').value = data.url_descarga || '';
-                document.getElementById('año_publicacion').value = data.año_publicacion || '';
-            } else if (type === 'enlaces') {
-                document.getElementById('url_enlace').value = data.url || '';
-                document.getElementById('categoria').value = data.categoria || '';
-            } else if (type === 'articulos') {
-                document.getElementById('autor_articulo').value = data.autor || '';
-                document.getElementById('url_fuente').value = data.url_fuente || '';
-                document.getElementById('fecha_publicacion').value = data.fecha_publicacion || '';
-            }
-            
-            document.getElementById('resourceModal').classList.remove('hidden');
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al cargar el recurso para editar');
-        }
-    }
+            const filter = this.getAttribute('data-filter');
 
-    async function deleteRecurso(type, id) {
-        if (!confirm('¿Estás seguro de que quieres eliminar este recurso?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/recursos/${type}/${id}/`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            resourceCards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = card.getAttribute('data-category') === filter ? 'block' : 'none';
                 }
             });
+        });
+    });
 
-            if (response.ok) {
-                alert('Recurso eliminado exitosamente');
-                location.reload();
-            } else {
-                alert('Error al eliminar el recurso');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al conectar con el servidor');
-        }
+    // Búsqueda
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+            resourceCards.forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                const description = card.getAttribute('data-description') || '';
+                card.style.display = (name.includes(searchTerm) || description.includes(searchTerm)) ? 'block' : 'none';
+            });
+        });
     }
 
-    // Cerrar modal con ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
+    console.log('Página de recursos inicializada correctamente');
+})();
+
+// --- Modal ---
+function openCreateModal() {
+    document.getElementById('modalTitle').textContent = 'Agregar Recurso';
+    document.getElementById('resourceForm').reset();
+    document.getElementById('resourceId').value = '';
+    switchTab('videos');
+    document.getElementById('resourceModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('resourceModal').classList.add('hidden');
+}
+
+function switchTab(type) {
+    const tabs = document.querySelectorAll('.tab-button');
+    tabs.forEach(tab => {
+        tab.classList.remove('active');
+        tab.classList.add('text-gray-600', 'dark:text-gray-400');
     });
+    const activeTab = document.getElementById(`tab-${type}`);
+    activeTab.classList.add('active');
+    activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
+
+    document.querySelectorAll('[id^="fields-"]').forEach(f => f.classList.add('hidden'));
+    document.getElementById(`fields-${type}`).classList.remove('hidden');
+    document.getElementById('resourceType').value = type;
+}
+
+// --- CRUD ---
+async function submitForm() {
+    const resourceId = document.getElementById('resourceId').value;
+    const resourceType = document.getElementById('resourceType').value;
+
+    const titulo = document.getElementById('titulo').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    if (!titulo || !descripcion) return alert('Completa Título y Descripción');
+
+    const data = { titulo, descripcion };
+
+    if (resourceType === 'videos') {
+        data.codigo_embed = document.getElementById('codigo_embed').value;
+        if (!data.codigo_embed.trim()) return alert('Falta código embed');
+        data.duracion = document.getElementById('duracion').value;
+    } else if (resourceType === 'libros') {
+        data.autor = document.getElementById('autor_libro').value;
+        if (!data.autor.trim()) return alert('Falta autor');
+        data.url_descarga = document.getElementById('url_descarga').value;
+        data.año_publicacion = document.getElementById('año_publicacion').value;
+    } else if (resourceType === 'enlaces') {
+        data.url = document.getElementById('url_enlace').value;
+        if (!data.url.trim()) return alert('Falta URL');
+        data.categoria = document.getElementById('categoria').value;
+    } else if (resourceType === 'articulos') {
+        data.autor = document.getElementById('autor_articulo').value;
+        if (!data.autor.trim()) return alert('Falta autor');
+        data.url_fuente = document.getElementById('url_fuente').value;
+        data.fecha_publicacion = document.getElementById('fecha_publicacion').value;
+    }
+
+    try {
+        const url = resourceId
+            ? `/apis/recursos/${resourceType}/${resourceId}/`
+            : `/apis/recursos/${resourceType}/`;
+        const method = resourceId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert(resourceId ? 'Recurso actualizado' : 'Recurso creado');
+            closeModal();
+            location.reload();
+        } else {
+            const error = await response.text();
+            console.error(error);
+            alert('Error al guardar el recurso');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión con el servidor');
+    }
+}
+
+async function editRecurso(type, id) {
+    try {
+        const response = await fetch(`/apis/recursos/${type}/${id}/`);
+        if (!response.ok) throw new Error('No se pudo cargar el recurso');
+        const data = await response.json();
+
+        document.getElementById('modalTitle').textContent = 'Editar Recurso';
+        document.getElementById('resourceId').value = id;
+        switchTab(type);
+
+        document.getElementById('titulo').value = data.titulo || '';
+        document.getElementById('descripcion').value = data.descripcion || '';
+
+        if (type === 'videos') {
+            document.getElementById('codigo_embed').value = data.codigo_embed || '';
+            document.getElementById('duracion').value = data.duracion || '';
+        } else if (type === 'libros') {
+            document.getElementById('autor_libro').value = data.autor || '';
+            document.getElementById('url_descarga').value = data.url_descarga || '';
+            document.getElementById('año_publicacion').value = data.año_publicacion || '';
+        } else if (type === 'enlaces') {
+            document.getElementById('url_enlace').value = data.url || '';
+            document.getElementById('categoria').value = data.categoria || '';
+        } else if (type === 'articulos') {
+            document.getElementById('autor_articulo').value = data.autor || '';
+            document.getElementById('url_fuente').value = data.url_fuente || '';
+            document.getElementById('fecha_publicacion').value = data.fecha_publicacion || '';
+        }
+
+        document.getElementById('resourceModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al cargar el recurso');
+    }
+}
+
+async function deleteRecurso(type, id) {
+    if (!confirm('¿Eliminar este recurso?')) return;
+    try {
+        const response = await fetch(`/apis/recursos/${type}/${id}/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+        });
+        if (response.ok) {
+            alert('Recurso eliminado');
+            location.reload();
+        } else {
+            alert('Error al eliminar');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+    }
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+});
 </script>
-{% endblock %} {
+{% endblock %}{
             searchInput.addEventListener('input', function () {
                 const searchTerm = this.value.toLowerCase();
 
@@ -770,7 +712,7 @@
             tab.classList.remove('active');
             tab.classList.add('text-gray-600', 'dark:text-gray-400');
         });
-        
+
         const activeTab = document.getElementById(`tab-${type}`);
         activeTab.classList.add('active');
         activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
@@ -780,7 +722,7 @@
         document.getElementById('fields-libros').classList.add('hidden');
         document.getElementById('fields-enlaces').classList.add('hidden');
         document.getElementById('fields-articulos').classList.add('hidden');
-        
+
         document.getElementById(`fields-${type}`).classList.remove('hidden');
         document.getElementById('resourceType').value = type;
     }
@@ -851,8 +793,8 @@
     }
 
     try {
-        const apiUrl = resourceId 
-            ? `/api/recursos/${resourceType}/${resourceId}/` 
+        const apiUrl = resourceId
+            ? `/api/recursos/${resourceType}/${resourceId}/`
             : `/api/recursos/${resourceType}/`;
         const method = resourceId ? 'PUT' : 'POST';
 
@@ -883,18 +825,18 @@
         try {
             const response = await fetch(`/api/recursos/${type}/${id}/`);
             if (!response.ok) throw new Error('No se pudo cargar el recurso');
-            
+
             const data = await response.json();
-            
+
             // Abrir modal en modo edición
             document.getElementById('modalTitle').textContent = 'Editar Recurso';
             document.getElementById('resourceId').value = id;
             switchTab(type);
-            
+
             // Llenar campos comunes
             document.getElementById('titulo').value = data.titulo || '';
             document.getElementById('descripcion').value = data.descripcion || '';
-            
+
             // Llenar campos específicos
             if (type === 'videos') {
                 document.getElementById('codigo_embed').value = data.codigo_embed || '';
@@ -911,7 +853,7 @@
                 document.getElementById('url_fuente').value = data.url_fuente || '';
                 document.getElementById('fecha_publicacion').value = data.fecha_publicacion || '';
             }
-            
+
             document.getElementById('resourceModal').classList.remove('hidden');
         } catch (error) {
             console.error('Error:', error);

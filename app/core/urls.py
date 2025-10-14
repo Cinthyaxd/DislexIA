@@ -17,6 +17,8 @@ urlpatterns = [
     # Vistas protegidas
     path('calendar/', views.CalendarView.as_view(), name='calendar'),
     path('documents/', views.DocumentsView.as_view(), name='documents'),
+    path('crear/', views.CrearRecursoView.as_view(), name='crear_recurso'),
+
     path('settings/', views.SettingsView.as_view(), name='settings'),
     path('support/', views.SupportView.as_view(), name='support'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
@@ -29,20 +31,5 @@ urlpatterns = [
     path('citas/<int:cita_id>/eliminar/', eliminar_cita, name='eliminar_cita'),
     path('citas/<int:cita_id>/completar/', marcar_cita_completada, name='marcar_cita_completada'),
 
-    
-    # ==================== API RECURSOS - VIDEOS ====================
-    path('api/recursos/videos/', views.VideoAPIView.as_view(), name='api_video_list'),
-    path('api/recursos/videos/<int:video_id>/', views.VideoAPIView.as_view(), name='api_video_detail'),
 
-# ==================== API RECURSOS - LIBROS ====================
-    path('api/recursos/libros/', views.LibroAPIView.as_view(), name='api_libro_list'),
-    path('api/recursos/libros/<int:libro_id>/', views.LibroAPIView.as_view(), name='api_libro_detail'),
-
-# ==================== API RECURSOS - ENLACES ====================
-    path('api/recursos/enlaces/', views.EnlaceAPIView.as_view(), name='api_enlace_list'),
-    path('api/recursos/enlaces/<int:enlace_id>/', views.EnlaceAPIView.as_view(), name='api_enlace_detail'),
-
-# ==================== API RECURSOS - ARTÍCULOS ====================
-    path('api/recursos/articulos/', views.ArticuloAPIView.as_view(), name='api_articulo_list'),
-    path('api/recursos/articulos/<int:articulo_id>/', views.ArticuloAPIView.as_view(), name='api_articulo_detail'),
 ]

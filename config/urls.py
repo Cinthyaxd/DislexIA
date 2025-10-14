@@ -22,9 +22,12 @@ from django.conf.urls.i18n import i18n_patterns
 
 from django.views.generic.base import RedirectView
 
+
 urlpatterns = [
     # Cambio de idioma
     path('i18n/', include('django.conf.urls.i18n')),
+    path('apis/', include('app.core.api_urls')),
+
 ]
 
 urlpatterns += i18n_patterns(
@@ -33,7 +36,6 @@ urlpatterns += i18n_patterns(
     
     # Admin
     path('admin/', admin.site.urls),
-    
     # Apps
     path('', include('app.core.urls', namespace='core')),
     path('dashboard/', include('app.dashboard.urls')),

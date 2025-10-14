@@ -4,11 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
 from django.contrib.auth.views import PasswordResetView
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
-
 from django.views.generic.edit import CreateView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -130,7 +128,7 @@ class CalendarView(TemplateView):
 
 class CrearRecursoView(LoginRequiredMixin, CreateView):
     model = Video
-    template_name = 'recurso.html'
+    template_name = 'documents.html'
     fields = ['titulo', 'descripcion', 'archivo', 'categoria']  # según tu modelo
     success_url = reverse_lazy('core:documents')
 
@@ -228,19 +226,21 @@ class DocumentsView(TemplateView):
             'articulos': articulos,
         })
         return context
-# Primero, elimina la clase RecursoAPIView que no se está usando
 
-# Luego reemplaza todas las clases API con estas versiones corregidas:
 
 @method_decorator(csrf_exempt, name='dispatch')
 class VideoAPIView(View):
     """API para Videos"""
-    
-    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
+        # Validar autenticación manualmente
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'No autenticado'}, status=401)
+
+        # Solo staff puede crear/editar/eliminar
         if request.method in ['POST', 'PUT', 'DELETE']:
             if not request.user.is_staff:
                 return JsonResponse({'error': 'No autorizado'}, status=403)
+
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, video_id=None, *args, **kwargs):
@@ -261,20 +261,27 @@ class VideoAPIView(View):
 
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+
+            if request.content_type.startswith('multipart/form-data'):
+                data = request.POST
+            else:
+                body = request.body.decode('utf-8') or '{}'
+                data = json.loads(body)
+
+            print("✅ Data recibida:", data)
+
             video = Video.objects.create(
                 titulo=data.get('titulo'),
                 descripcion=data.get('descripcion'),
-                codigo_embed=data.get('codigo_embed'),
+                codigo_embed=data.get('codigo_embed') or data.get('url'),
                 duracion=data.get('duracion', ''),
                 creado_por=request.user,
                 activo=True
             )
-            return JsonResponse({
-                'message': 'Video creado exitosamente',
-                'id': video.id
-            }, status=201)
+            return JsonResponse({'message': 'Video creado exitosamente', 'id': video.id}, status=201)
+
         except Exception as e:
+            print("💥 Error en POST:", e)
             return JsonResponse({'error': str(e)}, status=400)
 
     def put(self, request, video_id=None, *args, **kwargs):
@@ -305,7 +312,6 @@ class VideoAPIView(View):
             return JsonResponse({'message': 'Video eliminado exitosamente'})
         except Video.DoesNotExist:
             return JsonResponse({'error': 'Video no encontrado'}, status=404)
-
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LibroAPIView(View):
