@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 import json
 from datetime import datetime, date
 from .models import Cita, Video, Libro, Enlace, Articulo
-
+from django.contrib.auth import login
 
 # ==================== VISTAS DE AUTENTICACIÓN ====================
 
