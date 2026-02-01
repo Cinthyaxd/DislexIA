@@ -15,10 +15,10 @@ jobs:
     - name: Checkout del código
       uses: actions/checkout@v4
 
-    - name: Configurar Python 3.8
+    - name: Configurar Python 3.9
       uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
+        python-version: '3.9'
 
     - name: Instalar Dependencias
       run: |

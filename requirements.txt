@@ -12,3 +12,6 @@ tornado==6.5.2
 typing_extensions==4.15.0
 tzdata==2025.2
 Pillow>=11.0.0
+requests>=2.0.0
+whitenoise>=6.0.0
+gunicorn>=20.0.0
