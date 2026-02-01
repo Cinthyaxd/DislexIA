@@ -37,6 +37,6 @@ jobs:
         # Ejecuta los tests de Django
         python manage.py test
 
-    - name: Build Docker Image (Validación de entorno)
-          run: |
-            docker build -t dislexia-web:latest .
+    - name: Build Docker Image 
+        run: |
+          docker build -t dislexia-web:latest .
